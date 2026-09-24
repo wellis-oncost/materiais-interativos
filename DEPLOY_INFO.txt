@@ -1,0 +1,7 @@
+Materiais Interativos v1.0.0
+Pacote de publicação estática para GitHub Pages.
+Origem: release v1.0.0 consolidada.
+
+Arquitetura: local-first. Materiais, tentativas e biblioteca ficam no navegador do usuário, exceto quando ele aciona explicitamente serviços externos (ex.: geração por IA conectada).
+
+Publicação prevista: https://wellis-oncost.github.io/materiais-interativos/
