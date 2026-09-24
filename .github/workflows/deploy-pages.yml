@@ -1,6 +1,6 @@
 name: Deploy Materiais Interativos to GitHub Pages
 
-# Publicação v1.0.0 — pacote validado por SHA-256 antes do deploy.
+# Publicação v1.0.1 — reconstrói a base v1.0.0 validada e aplica o hotfix pós-lançamento.
 on:
   push:
     branches:
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Rebuild and validate publication package
+      - name: Rebuild base package and apply v1.0.1 hotfix
         shell: bash
         run: |
           set -euo pipefail
@@ -52,6 +52,12 @@ jobs:
           cp -a _build/unpacked/materiais-interativos-publicacao-v1.0.0/. _site/
           rm -rf _site/.github
           rm -f _site/DEPLOY_INFO.txt _site/PUBLICACAO_GITHUB_PAGES.txt
+
+          base64 --decode hotfix-v1.0.1.patch.gz.b64 | gzip -dc > _build/hotfix-v1.0.1.patch
+          patch -p1 -d _site < _build/hotfix-v1.0.1.patch
+          grep -q 'v1.0.1 · local-first' _site/index.html
+          grep -q 'materiais-interativos-v1-0-1' _site/sw.js
+          grep -q 'importAnswerKeyFile' _site/js/app.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
