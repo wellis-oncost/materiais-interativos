@@ -55,9 +55,7 @@ jobs:
 
           base64 --decode hotfix-v1.0.1.patch.gz.b64 | gzip -dc > _build/hotfix-v1.0.1.patch
           patch -p1 -d _site < _build/hotfix-v1.0.1.patch
-
-          base64 --decode hotfix-v1.0.2.patch.gz.b64 | gzip -dc > _build/hotfix-v1.0.2.patch
-          patch -p1 -d _site < _build/hotfix-v1.0.2.patch
+          patch -p1 -d _site < hotfix-v1.0.2.patch
 
           grep -q 'v1.0.2 · local-first' _site/index.html
           grep -q 'materiais-interativos-v1-0-2' _site/sw.js
