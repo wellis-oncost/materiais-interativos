@@ -1,0 +1,50 @@
+name: Deploy Materiais Interativos to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild publication package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _build _site
+          cat deploy_parts/part-*.b64 > _build/package.b64
+          base64 --decode _build/package.b64 > _build/package.zip
+          unzip -q _build/package.zip -d _build/unpacked
+          cp -a _build/unpacked/materiais-interativos-publicacao-v1.0.0/. _site/
+          rm -rf _site/.github
+          rm -f _site/DEPLOY_INFO.txt _site/PUBLICACAO_GITHUB_PAGES.txt
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
