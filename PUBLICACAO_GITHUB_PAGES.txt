@@ -1,0 +1,13 @@
+Publicação automática — GitHub Pages
+
+Este repositório contém a distribuição estática do Materiais Interativos v1.0.0.
+
+URL prevista:
+https://wellis-oncost.github.io/materiais-interativos/
+
+O workflow em .github/workflows/deploy-pages.yml publica a branch main no GitHub Pages.
+
+Para a primeira ativação, se o GitHub solicitar, abra:
+Settings > Pages > Build and deployment > Source > GitHub Actions.
+
+Depois disso, pushes futuros para main acionam a publicação automaticamente.
