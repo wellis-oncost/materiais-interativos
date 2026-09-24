@@ -1,5 +1,6 @@
 name: Deploy Materiais Interativos to GitHub Pages
 
+# Publicação v1.0.0 — pacote completo validado por SHA-256.
 on:
   push:
     branches:
