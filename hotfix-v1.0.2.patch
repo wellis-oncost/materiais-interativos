@@ -1,0 +1,200 @@
+diff -ruN materiais-interativos-publicacao-v1.0.1/index.html materiais-interativos-publicacao-v1.0.2/index.html
+--- materiais-interativos-publicacao-v1.0.1/index.html	2026-09-24 15:09:05.507655069 +0000
++++ materiais-interativos-publicacao-v1.0.2/index.html	2026-09-24 15:12:32.547209307 +0000
+@@ -9,7 +9,7 @@
+   <link rel="manifest" href="./manifest.webmanifest" />
+   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+   <link rel="stylesheet" href="./styles.css" />
+-  <title>Materiais Interativos — v1.0.1</title>
++  <title>Materiais Interativos — v1.0.2</title>
+ </head>
+ <body>
+   <a class="skip-link" href="#mainContent">Pular para o conteúdo principal</a>
+@@ -18,7 +18,7 @@
+       <div class="brand-mark" aria-hidden="true">MI</div>
+       <div>
+         <strong>Materiais Interativos</strong>
+-        <span>v1.0.1 · local-first</span>
++        <span>v1.0.2 · local-first</span>
+       </div>
+     </div>
+     <div class="topbar-actions">
+@@ -60,7 +60,7 @@
+       <div class="hero card">
+         <p class="eyebrow">FASE 1</p>
+         <h1>Transforme exercícios em uma atividade interativa</h1>
+-        <p>Cole o texto ou envie <strong>PDF, DOCX ou TXT</strong>. O arquivo é processado no seu dispositivo e não é enviado a servidor.</p>
++        <p>Cole o texto ou envie <strong>PDF, DOCX, TXT ou imagem</strong>. O arquivo é processado no seu dispositivo e não é enviado a servidor.</p>
+       </div>
+ 
+       <div id="importAlert" class="app-alert hidden" role="alert" aria-live="assertive"></div>
+@@ -68,13 +68,13 @@
+         <section class="card">
+           <h2>1. Adicionar material</h2>
+           <label class="file-drop" for="sourceFile" aria-describedby="sourceFileHint">
+-            <input id="sourceFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" aria-label="Selecionar material em PDF, DOCX ou TXT" />
+-            <span class="drop-title">Selecionar PDF, DOCX ou TXT</span>
++            <input id="sourceFile" type="file" accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/jpeg,image/png,image/webp" aria-label="Selecionar material em PDF, DOCX, TXT ou imagem" />
++            <span class="drop-title">Selecionar PDF, DOCX, TXT ou imagem</span>
+             <span id="sourceFileHint" class="muted">toque ou clique em qualquer ponto desta área · ou cole o conteúdo abaixo</span>
+           </label>
+           <div class="ocr-settings" aria-label="Configurações de OCR">
+             <div>
+-              <label for="ocrMode">OCR para PDFs digitalizados</label>
++              <label for="ocrMode">OCR para PDFs digitalizados e imagens</label>
+               <select id="ocrMode">
+                 <option value="auto" selected>Automático — só páginas sem texto suficiente</option>
+                 <option value="off">Desligado</option>
+@@ -90,7 +90,7 @@
+               </select>
+             </div>
+           </div>
+-          <p class="muted ocr-hint">No modo automático, o texto nativo do PDF continua tendo prioridade. O OCR é usado apenas quando a página parece digitalizada ou quase sem texto.</p>
++          <p class="muted ocr-hint">No modo automático, o texto nativo do PDF continua tendo prioridade. Em imagens (JPG, PNG ou WEBP), o OCR é aplicado diretamente no dispositivo.</p>
+           <div id="extractionReport" class="notice hidden" aria-live="polite"></div>
+           <label for="sourceText">Conteúdo</label>
+           <textarea id="sourceText" rows="16" placeholder="Exemplo:\n\n1. Qual é a capital do Brasil?\nA) São Paulo\nB) Brasília\nC) Salvador\nD) Recife\nGAB: B"></textarea>
+@@ -99,9 +99,9 @@
+             <summary><strong>2. Adicionar gabarito</strong> <span class="muted">(opcional, mas necessário para corrigir automaticamente)</span></summary>
+             <p class="muted">Sem gabarito, a plataforma pode registrar suas respostas e seu progresso, mas não pode afirmar se você acertou ou errou.</p>
+             <label class="file-drop compact" for="importAnswerKeyFile">
+-              <input id="importAnswerKeyFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" aria-label="Selecionar arquivo de gabarito" />
++              <input id="importAnswerKeyFile" type="file" accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/jpeg,image/png,image/webp" aria-label="Selecionar arquivo de gabarito" />
+               <span class="import-answer-key-drop-title">Selecionar arquivo de gabarito</span>
+-              <span class="muted">PDF, DOCX ou TXT · ou cole as respostas abaixo</span>
++              <span class="muted">PDF, DOCX, TXT ou imagem · ou cole as respostas abaixo</span>
+             </label>
+             <label for="importAnswerKeyText">Conteúdo do gabarito</label>
+             <textarea id="importAnswerKeyText" rows="6" placeholder="Ex.: 1 A\n2 C\n3 ANULADA\n4 B"></textarea>
+@@ -451,7 +451,7 @@
+         <button id="closeAnswerKeyDialogBtn" class="icon-btn" type="button" aria-label="Fechar">×</button>
+       </div>
+       <label class="file-drop compact" for="answerKeyFile">
+-        <input id="answerKeyFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" aria-label="Selecionar arquivo de gabarito" />
++        <input id="answerKeyFile" type="file" accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/jpeg,image/png,image/webp" aria-label="Selecionar arquivo de gabarito" />
+         <span class="answer-key-drop-title">Selecionar arquivo de gabarito</span>
+         <span class="muted">ou cole o conteúdo abaixo</span>
+       </label>
+diff -ruN materiais-interativos-publicacao-v1.0.1/js/app.js materiais-interativos-publicacao-v1.0.2/js/app.js
+--- materiais-interativos-publicacao-v1.0.1/js/app.js	2026-09-24 14:59:54.231520514 +0000
++++ materiais-interativos-publicacao-v1.0.2/js/app.js	2026-09-24 15:12:32.551744453 +0000
+@@ -120,7 +120,8 @@
+ function renderExtractionReport(result){
+   const box=$('#extractionReport'); if(!box)return;
+   const meta=result?.meta||{};
+-  if(meta.kind!=='pdf'){box.classList.add('hidden');box.innerHTML='';return;}
++  if(!['pdf','image'].includes(meta.kind)){box.classList.add('hidden');box.innerHTML='';return;}
++  if(meta.kind==='image'){const warnings=meta.warnings||[];box.innerHTML=`<strong>Relatório de extração · imagem</strong><p>OCR aplicado à imagem selecionada.</p>${warnings.length?`<p class="muted">${escapeHtml(warnings.join(' · '))}</p>`:''}`;box.classList.remove('hidden');return;}
+   const ocr=meta.ocr||{}; const pages=Array.isArray(ocr.pages)?ocr.pages:[];
+   const stats=Array.isArray(meta.pageStats)?meta.pageStats:[]; const low=stats.filter(p=>(Number(p.textChars)||0)<48||(Number(p.lineCount)||0)<2).length;
+   const warnings=(meta.warnings||[]).filter(w=>/OCR|sem texto extraível/i.test(w));
+@@ -888,7 +889,7 @@
+     const file=await ensureSourceFile();
+     if(file){ try{state.material.sourceMeta.fileFingerprint=await fingerprintFile(file);state.material.updatedAt=new Date().toISOString();await db.saveMaterial(state.material);}catch(err){console.warn(err);} }
+   }
+-  const payload=createQuizPayload(state.material,{appVersion:'1.0.1'}); download(`quiz-${Date.now()}.json`,JSON.stringify(payload,null,2));
++  const payload=createQuizPayload(state.material,{appVersion:'1.0.2'}); download(`quiz-${Date.now()}.json`,JSON.stringify(payload,null,2));
+ }
+ function newAttempt(){ $('#quizName').value=state.material?.title||'Minha atividade'; configureStart(); }
+ 
+diff -ruN materiais-interativos-publicacao-v1.0.1/js/extractors.js materiais-interativos-publicacao-v1.0.2/js/extractors.js
+--- materiais-interativos-publicacao-v1.0.1/js/extractors.js	2026-09-24 14:59:54.231675514 +0000
++++ materiais-interativos-publicacao-v1.0.2/js/extractors.js	2026-09-24 15:12:32.551895518 +0000
+@@ -318,10 +318,63 @@
+   };
+ }
+ 
++
++async function getImageDimensions(file){
++  if(typeof createImageBitmap==='function'){
++    try{
++      const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
++      const out={width:bitmap.width||null,height:bitmap.height||null};
++      bitmap.close?.();
++      return out;
++    }catch{}
++  }
++  return new Promise(resolve=>{
++    const url=URL.createObjectURL(file);
++    const img=new Image();
++    img.onload=()=>{const out={width:img.naturalWidth||null,height:img.naturalHeight||null};URL.revokeObjectURL(url);resolve(out);};
++    img.onerror=()=>{URL.revokeObjectURL(url);resolve({width:null,height:null});};
++    img.src=url;
++  });
++}
++
++export async function extractImage(file,onProgress=()=>{},options={}){
++  const language=normalizeOcrLanguage(options.ocrLanguage||'por');
++  let worker=null;
++  try{
++    onProgress({label:'Preparando OCR da imagem…',ocr:true});
++    const dimensions=await getImageDimensions(file);
++    worker=await createOcrWorker(language,onProgress);
++    onProgress({current:1,total:1,label:'Lendo imagem com OCR…',ocr:true});
++    const result=await worker.recognize(file,{rotateAuto:true});
++    const text=String(result?.data?.text||'').trim();
++    if(!text) throw new Error('O OCR não encontrou texto legível nesta imagem. Tente uma foto mais nítida ou use PDF/DOCX/TXT.');
++    const lines=plainTextToOcrLines(text,1,dimensions.width,dimensions.height);
++    if(!lines.length) throw new Error('O OCR não encontrou linhas de texto utilizáveis nesta imagem.');
++    const textChars=lines.reduce((n,x)=>n+(x.text?.length||0),0);
++    const lineCount=lines.filter(x=>x.text?.trim()).length;
++    return {
++      text:lines.map(x=>x.text).join('\n'),
++      meta:{
++        kind:'image',filename:file.name,pageCount:1,
++        pageDimensions:[{page:1,width:dimensions.width,height:dimensions.height}],
++        lineMap:lines.map(x=>({page:1,pageWidth:dimensions.width,pageHeight:dimensions.height,ocr:true,blank:Boolean(x.blank)})),
++        pageStats:[{page:1,textChars,lineCount,width:dimensions.width,height:dimensions.height,layout:null}],
++        layout:{analyzedPages:1,twoColumnPages:[],tableRows:0,twoColumnTablePages:[],visualPages:[1],formulaPages:[],imagePages:[1],visualCandidateCount:0},
++        visualCandidates:[],
++        ocr:{requestedMode:'image',language,engine:'tesseract.js',engineVersion:'7.0.0',pages:[1],summary:{pageCount:1,nativePages:0,ocrPages:1,emptyNativePages:1}},
++        warnings:['Imagem processada com OCR. Confira a transcrição antes de iniciar a atividade.']
++      }
++    };
++  }finally{
++    if(worker) try{await worker.terminate();}catch{}
++  }
++}
++
+ export async function extractFile(file, onProgress = () => {}, options = {}) {
+   const name = file.name.toLowerCase();
+   if (name.endsWith('.pdf') || file.type === 'application/pdf') return extractPdf(file,onProgress,options);
+   if (name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return extractDocx(file,onProgress);
+   if (name.endsWith('.txt') || file.type.startsWith('text/')) return extractTxt(file,onProgress);
+-  throw new Error('Formato ainda não suportado. Use PDF, DOCX ou TXT.');
++  if (/\.(?:jpe?g|png|webp)$/i.test(name) || /^image\/(?:jpeg|png|webp)$/i.test(file.type||'')) return extractImage(file,onProgress,options);
++  throw new Error('Formato ainda não suportado. Use PDF, DOCX, TXT, JPG, PNG ou WEBP.');
+ }
+diff -ruN materiais-interativos-publicacao-v1.0.1/js/parser.js materiais-interativos-publicacao-v1.0.2/js/parser.js
+--- materiais-interativos-publicacao-v1.0.1/js/parser.js	2026-09-24 14:59:54.231767451 +0000
++++ materiais-interativos-publicacao-v1.0.2/js/parser.js	2026-09-24 15:12:32.552078149 +0000
+@@ -74,7 +74,7 @@
+ 
+ function sourceFor(startLine, endLine, meta={}) {
+   const source = { kind:meta.kind || 'text', startLine, endLine, filename:meta.filename || null };
+-  if (meta.kind === 'pdf' && Array.isArray(meta.lineMap)) {
++  if (['pdf','image'].includes(meta.kind) && Array.isArray(meta.lineMap)) {
+     const slice = meta.lineMap.slice(Math.max(0,startLine-1), Math.max(startLine,endLine));
+     const pageEntries = slice.filter(x => x?.page);
+     source.ocr = pageEntries.some(x => x?.ocr);
+diff -ruN materiais-interativos-publicacao-v1.0.1/js/quiz-transfer.js materiais-interativos-publicacao-v1.0.2/js/quiz-transfer.js
+--- materiais-interativos-publicacao-v1.0.1/js/quiz-transfer.js	2026-09-24 14:59:54.231796965 +0000
++++ materiais-interativos-publicacao-v1.0.2/js/quiz-transfer.js	2026-09-24 15:12:32.552097948 +0000
+@@ -154,7 +154,7 @@
+   return {...inspected,importedMaterial};
+ }
+ 
+-export function createQuizPayload(material,{appVersion='1.0.1',exportedAt=new Date().toISOString()}={}){
++export function createQuizPayload(material,{appVersion='1.0.2',exportedAt=new Date().toISOString()}={}){
+   if(!isObj(material) || !Array.isArray(material.questions)) throw new Error('Material inválido para exportação.');
+   return {
+     format:QUIZ_FORMAT,
+diff -ruN materiais-interativos-publicacao-v1.0.1/sw.js materiais-interativos-publicacao-v1.0.2/sw.js
+--- materiais-interativos-publicacao-v1.0.1/sw.js	2026-09-24 14:59:54.229384329 +0000
++++ materiais-interativos-publicacao-v1.0.2/sw.js	2026-09-24 15:12:32.550536994 +0000
+@@ -1,4 +1,4 @@
+-const CACHE = 'materiais-interativos-v1-0-1';
++const CACHE = 'materiais-interativos-v1-0-2';
+ const ASSETS = ['./','./index.html','./styles.css','./js/app.js','./js/parser.js','./js/answer-key.js','./js/source-utils.js','./js/library-utils.js','./js/quiz-transfer.js','./js/source-link.js','./js/db.js','./js/extractors.js','./js/ocr-utils.js','./js/layout-utils.js','./js/visual-utils.js','./js/visual-association.js','./js/visual-review.js','./js/ux-utils.js','./js/audit-utils.js','./js/generation-utils.js','./js/ai-connector.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+ self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
+ self.addEventListener('activate', event => event.waitUntil((async () => {
