@@ -1,6 +1,6 @@
 name: Deploy Materiais Interativos to GitHub Pages
 
-# Publicação v1.0.0 — pacote completo validado por SHA-256.
+# Publicação v1.0.0 — pacote validado por SHA-256 antes do deploy.
 on:
   push:
     branches:
@@ -26,13 +26,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Rebuild publication package
+      - name: Rebuild and validate publication package
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p _build _site
-          cat deploy_parts/part-*.b64 > _build/package.b64
+          cat \
+            deploy_parts/part-00.b64 \
+            deploy_parts/part-01.b64 \
+            deploy_parts/part-02a.b64 \
+            deploy_parts/part-02b.b64 \
+            deploy_parts/part-02c.b64 \
+            deploy_parts/part-02d.b64 \
+            deploy_parts/part-03.b64 \
+            deploy_parts/part-04.b64 \
+            deploy_parts/part-05.b64 \
+            deploy_parts/part-06.b64 \
+            deploy_parts/part-07.b64 \
+            deploy_parts/part-08.b64 \
+            deploy_parts/part-09.b64 \
+            > _build/package.b64
           base64 --decode _build/package.b64 > _build/package.zip
+          echo "cf81b83ad562707e9d9308c88a673c5f7d2960364bbf2dc217a42599a315be03  _build/package.zip" | sha256sum -c -
           unzip -q _build/package.zip -d _build/unpacked
           cp -a _build/unpacked/materiais-interativos-publicacao-v1.0.0/. _site/
           rm -rf _site/.github
