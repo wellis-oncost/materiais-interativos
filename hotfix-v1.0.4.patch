@@ -1,0 +1,61 @@
+--- /mnt/data/work-v103/materiais-interativos-v1.0.3/index.html	2026-09-25 12:00:51.000000000 +0000
++++ /mnt/data/materiais-interativos-v1.0.4-fixed/index.html	2026-09-25 16:55:43.875542890 +0000
+@@ -9,7 +9,7 @@
+   <link rel="manifest" href="./manifest.webmanifest" />
+   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+   <link rel="stylesheet" href="./styles.css" />
+-  <title>Materiais Interativos — v1.0.3</title>
++  <title>Materiais Interativos — v1.0.4</title>
+ </head>
+ <body>
+   <a class="skip-link" href="#mainContent">Pular para o conteúdo principal</a>
+@@ -18,7 +18,7 @@
+       <div class="brand-mark" aria-hidden="true">MI</div>
+       <div>
+         <strong>Materiais Interativos</strong>
+-        <span>v1.0.3 · local-first</span>
++        <span>v1.0.4 · local-first</span>
+       </div>
+     </div>
+     <div class="topbar-actions">
+--- /mnt/data/work-v103/materiais-interativos-v1.0.3/js/extractors.js	2026-09-25 11:58:18.000000000 +0000
++++ /mnt/data/materiais-interativos-v1.0.4-fixed/js/extractors.js	2026-09-25 16:55:43.875241707 +0000
+@@ -132,7 +132,7 @@
+     nativeByPage.set(pageNumber,lines);
+     const textChars=lines.reduce((n,x)=>n+(x.text?.length||0),0);
+     const lineCount=lines.filter(x=>x.text?.trim()).length;
+-    let visuals={imageCount:0,pathOps:0,formulaSignals:formulaSignalCount(lines),visualHeavy:false,formulaLikely:false};
++    let visuals=buildVisualSignals({text:lines,imageCount:0,pathOps:0});
+     if(options.analyzeVisuals!==false){
+       const analysis=await analyzePdfPageVisuals(page,pdfjs,lines,pageNumber,viewport.width,viewport.height);
+       visuals=analysis.signals;
+--- /mnt/data/work-v103/materiais-interativos-v1.0.3/js/app.js	2026-09-25 12:01:05.000000000 +0000
++++ /mnt/data/materiais-interativos-v1.0.4-fixed/js/app.js	2026-09-25 16:55:43.876031045 +0000
+@@ -889,7 +889,7 @@
+     const file=await ensureSourceFile();
+     if(file){ try{state.material.sourceMeta.fileFingerprint=await fingerprintFile(file);state.material.updatedAt=new Date().toISOString();await db.saveMaterial(state.material);}catch(err){console.warn(err);} }
+   }
+-  const payload=createQuizPayload(state.material,{appVersion:'1.0.3'}); download(`quiz-${Date.now()}.json`,JSON.stringify(payload,null,2));
++  const payload=createQuizPayload(state.material,{appVersion:'1.0.4'}); download(`quiz-${Date.now()}.json`,JSON.stringify(payload,null,2));
+ }
+ function newAttempt(){ $('#quizName').value=state.material?.title||'Minha atividade'; configureStart(); }
+ 
+--- /mnt/data/work-v103/materiais-interativos-v1.0.3/js/quiz-transfer.js	2026-09-25 11:58:18.000000000 +0000
++++ /mnt/data/materiais-interativos-v1.0.4-fixed/js/quiz-transfer.js	2026-09-25 16:55:43.876170725 +0000
+@@ -154,7 +154,7 @@
+   return {...inspected,importedMaterial};
+ }
+ 
+-export function createQuizPayload(material,{appVersion='1.0.3',exportedAt=new Date().toISOString()}={}){
++export function createQuizPayload(material,{appVersion='1.0.4',exportedAt=new Date().toISOString()}={}){
+   if(!isObj(material) || !Array.isArray(material.questions)) throw new Error('Material inválido para exportação.');
+   return {
+     format:QUIZ_FORMAT,
+--- /mnt/data/work-v103/materiais-interativos-v1.0.3/sw.js	2026-09-25 11:58:18.000000000 +0000
++++ /mnt/data/materiais-interativos-v1.0.4-fixed/sw.js	2026-09-25 16:55:43.875606827 +0000
+@@ -1,4 +1,4 @@
+-const CACHE = 'materiais-interativos-v1-0-3';
++const CACHE = 'materiais-interativos-v1-0-4';
+ const ASSETS = ['./','./index.html','./styles.css','./js/app.js','./js/parser.js','./js/answer-key.js','./js/source-utils.js','./js/library-utils.js','./js/quiz-transfer.js','./js/source-link.js','./js/db.js','./js/extractors.js','./js/ocr-utils.js','./js/layout-utils.js','./js/visual-utils.js','./js/visual-association.js','./js/visual-review.js','./js/ux-utils.js','./js/audit-utils.js','./js/generation-utils.js','./js/ai-connector.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+ self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
+ self.addEventListener('activate', event => event.waitUntil((async () => {
