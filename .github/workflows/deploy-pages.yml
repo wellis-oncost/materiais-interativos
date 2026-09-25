@@ -1,6 +1,6 @@
 name: Deploy Materiais Interativos to GitHub Pages
 
-# Publicação v1.0.2 — reconstrói a base v1.0.0 validada e aplica os hotfixes pós-lançamento.
+# Publicação v1.0.3 — reconstrói a base v1.0.0 validada e aplica os hotfixes pós-lançamento.
 on:
   push:
     branches:
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Rebuild base package and apply v1.0.2 hotfixes
+      - name: Rebuild base package and apply v1.0.3 hotfixes
         shell: bash
         run: |
           set -euo pipefail
@@ -56,11 +56,15 @@ jobs:
           base64 --decode hotfix-v1.0.1.patch.gz.b64 | gzip -dc > _build/hotfix-v1.0.1.patch
           patch -p1 -d _site < _build/hotfix-v1.0.1.patch
           patch -p1 -d _site < hotfix-v1.0.2.patch
+          cat hotfix-v1.0.3.part-00 hotfix-v1.0.3.part-01 hotfix-v1.0.3.part-02 hotfix-v1.0.3.part-03 > _build/hotfix-v1.0.3.patch
+          patch -p1 -d _site < _build/hotfix-v1.0.3.patch
 
-          grep -q 'v1.0.2 · local-first' _site/index.html
-          grep -q 'materiais-interativos-v1-0-2' _site/sw.js
-          grep -q 'extractImage' _site/js/extractors.js
-          grep -q 'image/jpeg' _site/index.html
+          grep -q 'v1.0.3 · local-first' _site/index.html
+          grep -q 'materiais-interativos-v1-0-3' _site/sw.js
+          grep -q 'Interpretar resposta' _site/index.html
+          grep -q 'Você não precisa saber nem criar JSON' _site/index.html
+          grep -q 'parseFriendlyGeneratedText' _site/js/generation-utils.js
+          grep -q 'appVersion:\x271.0.3\x27' _site/js/app.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
