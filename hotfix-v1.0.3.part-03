@@ -1,0 +1,63 @@
++  }
++  return questions.length?{title,questions}:null;
+ }
+ 
+ function normalizeGeneratedQuestion(q,index,errors,warnings){
+@@ -121,23 +181,27 @@
+ }
+ 
+ export function inspectGeneratedQuestionsPayload(input,{maxQuestions=50}={}){
+-  const errors=[],warnings=[]; let parsed=input;
++  const errors=[],warnings=[]; let parsed=input; let sourceFormat=typeof input==='string'?'text':'structured';
+   if(typeof input==='string'){
+-    let raw=input.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+-    try{ parsed=JSON.parse(raw); }
++    const raw=input.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
++    let structured=null;
++    try{ structured=JSON.parse(raw); sourceFormat='json'; }
+     catch{
+-      const start=Math.min(...['{','['].map(ch=>raw.indexOf(ch)).filter(i=>i>=0));
++      const starts=['{','['].map(ch=>raw.indexOf(ch)).filter(i=>i>=0);
++      const start=starts.length?Math.min(...starts):-1;
+       const end=Math.max(raw.lastIndexOf('}'),raw.lastIndexOf(']'));
+-      if(Number.isFinite(start)&&start>=0&&end>start){ try{parsed=JSON.parse(raw.slice(start,end+1));}catch{} }
++      if(start>=0&&end>start){ try{structured=JSON.parse(raw.slice(start,end+1));sourceFormat='json';}catch{} }
+     }
++    parsed=structured ?? parseFriendlyGeneratedText(raw);
++    if(parsed&&sourceFormat!=='json')sourceFormat='plain-text';
+   }
+   if(Array.isArray(parsed))parsed={title:'Questões geradas',questions:parsed};
+-  if(!isObj(parsed)) return {ok:false,errors:['A resposta da IA não contém JSON reconhecível.'],warnings,parsed:null,questions:[]};
++  if(!isObj(parsed)) return {ok:false,errors:['Não consegui entender a resposta da IA. Cole a resposta completa, com as questões, alternativas e respostas corretas quando houver.'],warnings,parsed:null,questions:[],sourceFormat};
+   const rawQuestions=Array.isArray(parsed.questions)?parsed.questions:[];
+-  if(!rawQuestions.length)errors.push('Nenhuma questão foi encontrada no JSON gerado.');
+-  if(rawQuestions.length>maxQuestions)errors.push(`O JSON excede o limite de ${maxQuestions} questões por geração.`);
++  if(!rawQuestions.length)errors.push('Nenhuma questão foi encontrada na resposta da IA.');
++  if(rawQuestions.length>maxQuestions)errors.push(`A resposta excede o limite de ${maxQuestions} questões por geração.`);
+   const questions=rawQuestions.slice(0,maxQuestions).map((q,i)=>normalizeGeneratedQuestion(q,i,errors,warnings)).filter(Boolean);
+-  return {ok:errors.length===0,errors,warnings,parsed,title:text(parsed.title).trim()||'Questões geradas',questions};
++  return {ok:errors.length===0,errors,warnings,parsed,title:text(parsed.title).trim()||'Questões geradas',questions,sourceFormat};
+ }
+ 
+ export function materialFromGeneratedQuestions(input,{config={},context={},provider='manual',model=null,now=new Date().toISOString()}={}){
+diff -urN a/js/quiz-transfer.js b/js/quiz-transfer.js
+--- a/js/quiz-transfer.js	2026-09-25 12:02:30.661513035 +0000
++++ b/js/quiz-transfer.js	2026-09-25 12:02:30.662357735 +0000
+@@ -154,7 +154,7 @@
+   return {...inspected,importedMaterial};
+ }
+ 
+-export function createQuizPayload(material,{appVersion='1.0.2',exportedAt=new Date().toISOString()}={}){
++export function createQuizPayload(material,{appVersion='1.0.3',exportedAt=new Date().toISOString()}={}){
+   if(!isObj(material) || !Array.isArray(material.questions)) throw new Error('Material inválido para exportação.');
+   return {
+     format:QUIZ_FORMAT,
+diff -urN a/sw.js b/sw.js
+--- a/sw.js	2026-09-25 12:02:30.653855747 +0000
++++ b/sw.js	2026-09-25 12:02:30.654687778 +0000
+@@ -1,4 +1,4 @@
+-const CACHE = 'materiais-interativos-v1-0-2';
++const CACHE = 'materiais-interativos-v1-0-3';
+ const ASSETS = ['./','./index.html','./styles.css','./js/app.js','./js/parser.js','./js/answer-key.js','./js/source-utils.js','./js/library-utils.js','./js/quiz-transfer.js','./js/source-link.js','./js/db.js','./js/extractors.js','./js/ocr-utils.js','./js/layout-utils.js','./js/visual-utils.js','./js/visual-association.js','./js/visual-review.js','./js/ux-utils.js','./js/audit-utils.js','./js/generation-utils.js','./js/ai-connector.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+ self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
+ self.addEventListener('activate', event => event.waitUntil((async () => {
