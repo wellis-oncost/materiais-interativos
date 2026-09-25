@@ -62,7 +62,7 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
-          import json
+          import json, re
 
           def replace_exact(path, old, new):
               p = Path(path)
@@ -80,21 +80,21 @@ jobs:
           replace_exact('_site/index.html',
               '<title>Materiais Interativos — v1.0.4</title>',
               '<title>Onstudies — v1.0.5</title>')
-          replace_exact('_site/index.html',
-              '''    <div class="brand">
-              <div class="brand-mark" aria-hidden="true">MI</div>
-              <div>
-                <strong>Materiais Interativos</strong>
-                <span>v1.0.4 · local-first</span>
-              </div>
-            </div>''',
-              '''    <div class="brand" aria-label="Onstudies">
-              <img class="brand-mark" src="./icons/onstudies-mark.png" alt="" aria-hidden="true" />
-              <div class="brand-copy">
-                <strong class="brand-name"><span class="brand-on">on</span><span class="brand-studies">studies</span></strong>
-                <span>v1.0.5 · local-first</span>
-              </div>
-            </div>''')
+
+          idx = Path('_site/index.html')
+          text = idx.read_text(encoding='utf-8')
+          pattern = re.compile(r'<div class="brand">\s*<div class="brand-mark" aria-hidden="true">MI</div>\s*<div>\s*<strong>Materiais Interativos</strong>\s*<span>v1\.0\.4 · local-first</span>\s*</div>\s*</div>', re.S)
+          replacement = '''<div class="brand" aria-label="Onstudies">
+            <img class="brand-mark" src="./icons/onstudies-mark.png" alt="" aria-hidden="true" />
+            <div class="brand-copy">
+              <strong class="brand-name"><span class="brand-on">on</span><span class="brand-studies">studies</span></strong>
+              <span>v1.0.5 · local-first</span>
+            </div>
+          </div>'''
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'Cabeçalho antigo não encontrado de forma única: {count}')
+          idx.write_text(text, encoding='utf-8')
 
           css = Path('_site/styles.css')
           css.write_text(css.read_text(encoding='utf-8') + r'''
