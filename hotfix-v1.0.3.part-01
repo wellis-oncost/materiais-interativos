@@ -1,0 +1,63 @@
+     $('#generationPrompt').value=prompt; $('#copyGenerationPromptBtn').disabled=false; $('#generateWithAiBtn').disabled=false; $('#createGeneratedMaterialBtn').disabled=true; $('#generationPreview').classList.add('hidden');
+     const contextInfo=context.meta?.truncated?` O contexto foi limitado para a geração (${context.meta.originalChars} caracteres no original).`:'';
+-    setGeneratorAlert(`Prompt preparado para ${config.count} questão(ões).${contextInfo}`,'success');
++    setGeneratorAlert(`Instruções preparadas para ${config.count} questão(ões).${contextInfo}`,'success');
+   }catch(err){console.error(err);setGeneratorAlert(err.message||String(err));toast('Não foi possível preparar a geração.','error');}
+ }
+ async function copyGenerationPrompt(){
+-  const prompt=$('#generationPrompt')?.value||''; if(!prompt)return toast('Prepare o prompt primeiro.');
+-  try{await navigator.clipboard.writeText(prompt);toast('Prompt copiado.','success');}
+-  catch{const ta=$('#generationPrompt');ta.focus();ta.select();document.execCommand?.('copy');toast('Prompt selecionado para cópia.');}
++  const prompt=$('#generationPrompt')?.value||''; if(!prompt)return toast('Prepare as instruções primeiro.');
++  try{await navigator.clipboard.writeText(prompt);toast('Instruções copiadas.','success');}
++  catch{const ta=$('#generationPrompt');ta.focus();ta.select();document.execCommand?.('copy');toast('Instruções selecionadas para cópia.');}
+ }
+ function renderGenerationPreview(){
+   const raw=$('#generationJson')?.value||''; const stats=generationPreviewStats(raw); const inspected=inspectGeneratedQuestionsPayload(raw); state.generation.validated=inspected.ok?inspected:null;
+@@ -265,19 +265,19 @@
+   const items=(inspected.questions||[]).map((q,i)=>`<div class="generation-preview-item"><strong>Q${i+1} · ${escapeHtml(q.type)}</strong><p>${escapeHtml(q.statement)}</p><p class="muted">Gabarito gerado: ${escapeHtml(q.correctAnswer||'sem gabarito')}${q.explanation?` · explicação incluída`:''}</p></div>`).join('');
+   box.innerHTML=`<div class="stats-grid compact-stats"><div class="stat"><span>Questões</span><strong>${stats.count}</strong></div><div class="stat"><span>Múltipla escolha</span><strong>${stats.typeCounts['single-choice']||0}</strong></div><div class="stat"><span>Certo/Errado</span><strong>${stats.typeCounts['true-false']||0}</strong></div><div class="stat"><span>Resposta curta</span><strong>${stats.typeCounts['short-answer']||0}</strong></div></div>${errorHtml}${warningHtml}${items?`<div class="generation-preview-list">${items}</div>`:''}`;
+   $('#createGeneratedMaterialBtn').disabled=!inspected.ok;
+-  if(inspected.ok)setGeneratorAlert(`JSON válido: ${inspected.questions.length} questão(ões) pronta(s) para entrar na revisão.`,'success');
+-  else setGeneratorAlert('O JSON retornado precisa de correções antes de virar material.','error');
++  if(inspected.ok)setGeneratorAlert(`Resposta interpretada: ${inspected.questions.length} questão(ões) pronta(s) para entrar na revisão.`,'success');
++  else setGeneratorAlert('Não consegui transformar essa resposta em questões ainda. Confira o texto e tente novamente.','error');
+   return inspected;
+ }
+ async function generateWithConnectedAi(){
+   if(!state.generation.prompt){await prepareGeneration();if(!state.generation.prompt)return;}
+   const endpoint=$('#aiEndpoint').value.trim(), model=$('#aiModel').value.trim(), apiKey=$('#aiApiKey').value;
+-  const btn=$('#generateWithAiBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='Gerando…';setGeneratorAlert('Enviando o prompt ao endpoint configurado…','info');
++  const btn=$('#generateWithAiBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='Gerando…';setGeneratorAlert('Enviando as instruções ao endpoint configurado…','info');
+   try{
+     if($('#rememberAiConnection').checked){await Promise.all([db.setSetting('aiEndpoint',endpoint),db.setSetting('aiModel',model)]);}else{await Promise.all([db.setSetting('aiEndpoint',''),db.setSetting('aiModel','')]);}
+     const result=await requestQuestionGeneration({endpoint,model,apiKey,prompt:state.generation.prompt});
+     $('#generationJson').value=result.content; state.generation.provider='connected-api';state.generation.model=model; renderGenerationPreview();
+-  }catch(err){console.error(err);setGeneratorAlert(`Falha na geração conectada: ${err.message||err}`,'error');toast('A geração conectada falhou. Você ainda pode usar Copiar prompt.','error');}
++  }catch(err){console.error(err);setGeneratorAlert(`Falha na geração conectada: ${err.message||err}`,'error');toast('A geração conectada falhou. Você ainda pode usar Copiar instruções.','error');}
+   finally{btn.disabled=false;btn.textContent=old;}
+ }
+ async function createGeneratedMaterial(){
+@@ -495,7 +495,7 @@
+ 
+ function questionOriginHtml(q){
+   if(q.source?.kind==='generated'){
+-    const provider=q.source.provider==='connected-api'?'IA conectada':'IA externa / JSON colado';
++    const provider=q.source.provider==='connected-api'?'IA conectada':'IA externa / resposta colada';
+     const model=q.source.model?` · modelo ${escapeHtml(q.source.model)}`:'';
+     return `<div class="notice origin-generated"><strong>Origem · QUESTÃO GERADA</strong><p>${provider}${model} · ${escapeHtml(q.source.generatedAt?fmtDate(q.source.generatedAt):'data não registrada')}</p><p class="muted">O gabarito e a explicação foram gerados e não são oficiais. Confirme o conteúdo antes de resolver.</p></div>`;
+   }
+@@ -889,7 +889,7 @@
+     const file=await ensureSourceFile();
+     if(file){ try{state.material.sourceMeta.fileFingerprint=await fingerprintFile(file);state.material.updatedAt=new Date().toISOString();await db.saveMaterial(state.material);}catch(err){console.warn(err);} }
+   }
+-  const payload=createQuizPayload(state.material,{appVersion:'1.0.2'}); download(`quiz-${Date.now()}.json`,JSON.stringify(payload,null,2));
++  const payload=createQuizPayload(state.material,{appVersion:'1.0.3'}); download(`quiz-${Date.now()}.json`,JSON.stringify(payload,null,2));
+ }
+ function newAttempt(){ $('#quizName').value=state.material?.title||'Minha atividade'; configureStart(); }
+ 
+diff -urN a/js/generation-utils.js b/js/generation-utils.js
+--- a/js/generation-utils.js	2026-09-25 12:02:30.659444387 +0000
++++ b/js/generation-utils.js	2026-09-25 12:02:30.660626037 +0000
+@@ -97,10 +97,70 @@
+     : cfg.sourceMode==='material'
