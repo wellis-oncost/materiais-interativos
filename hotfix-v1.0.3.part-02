@@ -1,0 +1,66 @@
+       ? 'Use SOMENTE o conteúdo do MATERIAL-BASE abaixo. Não acrescente fatos externos; se o material não sustentar uma questão, não invente.'
+       : 'Crie novas questões focadas nas dificuldades indicadas, sem copiar literalmente as questões originais. Use apenas o conteúdo fornecido como referência conceitual.';
+-  const explanationRule=cfg.includeExplanations?'Inclua uma explicação curta e objetiva em "explanation" para cada gabarito.':'Use "explanation": null em todas as questões.';
++  const explanationRule=cfg.includeExplanations?'Inclua uma explicação curta e objetiva depois de cada resposta correta.':'Não é necessário incluir explicação do gabarito.';
+   const scope=cfg.scope?`Recorte/foco adicional: ${cfg.scope}`:'Sem recorte adicional.';
+   const contextBlock=context?.content?`\n\n### CONTEXTO FORNECIDO\n${context.content}`:'';
+-  return `Você está gerando questões de estudo para uma plataforma educacional.\n\nREGRAS OBRIGATÓRIAS:\n- Gere exatamente ${cfg.count} questão(ões).\n- Dificuldade: ${difficultyLabel(cfg.difficulty)}.\n- Tipos permitidos: ${typeList}.\n- ${sourceRule}\n- ${scope}\n- ${explanationRule}\n- Múltipla escolha: use de 4 a 5 alternativas com chaves A, B, C, D, E e exatamente uma correta.\n- Certo/Errado: use duas alternativas, preferencialmente C = Certo e E = Errado.\n- Resposta curta: forneça um gabarito curto e verificável.\n- Evite ambiguidades, pegadinhas artificiais e alternativas obviamente absurdas.\n- Não cite que você é uma IA.\n- Não use markdown fora do JSON.\n\nRETORNE SOMENTE JSON VÁLIDO neste formato:\n{\n  "title": "Título curto do conjunto",\n  "questions": [\n    {\n      "statement": "Enunciado",\n      "type": "single-choice|true-false|short-answer",\n      "options": [{"key":"A","text":"..."}],\n      "correctAnswer": "A",\n      "explanation": null\n    }\n  ]\n}\n\nAssunto principal: ${cfg.topic||context?.title||'conteúdo fornecido'}.${contextBlock}`;
++  return `Você está gerando questões de estudo para uma plataforma educacional.\n\nREGRAS OBRIGATÓRIAS:\n- Gere exatamente ${cfg.count} questão(ões).\n- Dificuldade: ${difficultyLabel(cfg.difficulty)}.\n- Tipos permitidos: ${typeList}.\n- ${sourceRule}\n- ${scope}\n- ${explanationRule}\n- Múltipla escolha: use de 4 a 5 alternativas com chaves A, B, C, D, E e exatamente uma correta.\n- Certo/Errado: use duas alternativas, preferencialmente C = Certo e E = Errado.\n- Resposta curta: forneça um gabarito curto e verificável.\n- Evite ambiguidades, pegadinhas artificiais e alternativas obviamente absurdas.\n- Não cite que você é uma IA.\n- Não acrescente introdução ou despedida.\n\nFORMATO DE RESPOSTA PREFERIDO (simples e legível):\nTítulo: Título curto do conjunto\n\nQuestão 1: Enunciado da questão\nA) Alternativa A\nB) Alternativa B\nC) Alternativa C\nD) Alternativa D\nResposta correta: A\nExplicação: justificativa curta, se solicitada\n\nRepita o mesmo padrão para as demais questões. Se preferir devolver uma estrutura técnica (JSON), a plataforma também aceita automaticamente.\n\nAssunto principal: ${cfg.topic||context?.title||'conteúdo fornecido'}.${contextBlock}`;
++}
++
++function stripFriendlyDecorations(line=''){
++  return text(line).replace(/^\s*[-*•]\s*/,'').replace(/\*\*/g,'').replace(/__+/g,'').trim();
++}
++
++function normalizeFriendlyAnswer(value='',options=[]){
++  const raw=stripFriendlyDecorations(value).replace(/^[:\-\s]+/,'').trim();
++  if(!raw)return '';
++  const direct=raw.match(/^([A-E])(?:\b|[).:\-])/i); if(direct)return direct[1].toUpperCase();
++  if(/^(certo|verdadeiro|true)$/i.test(raw))return options.some(o=>o.key==='C')?'C':raw;
++  if(/^(errado|falso|false)$/i.test(raw))return options.some(o=>o.key==='E')?'E':raw;
++  return raw;
++}
++
++export function parseFriendlyGeneratedText(input=''){
++  const raw=text(input).replace(/```(?:json|text|markdown)?/gi,'').replace(/```/g,'').replace(/\r\n?/g,'\n').trim();
++  if(!raw)return null;
++  const lines=raw.split('\n');
++  const questions=[]; let current=null; let title='Questões geradas'; let mode='statement';
++  const pushCurrent=()=>{
++    if(!current)return;
++    current.statement=text(current.statement).replace(/\s+/g,' ').trim();
++    current.explanation=current.explanation?text(current.explanation).replace(/\s+/g,' ').trim():null;
++    if(current.statement)questions.push(current);
++    current=null;mode='statement';
++  };
++  for(const original of lines){
++    const line=stripFriendlyDecorations(original);
++    if(!line)continue;
++    const titleMatch=line.match(/^(?:t[ií]tulo|title)\s*[:\-]\s*(.+)$/i);
++    if(titleMatch&&!current){title=titleMatch[1].trim()||title;continue;}
++    const qMatch=line.match(/^(?:quest(?:[aã]o|ao)\s*)?(\d{1,3})(?:\s*[.)\-:]\s*|\s*$)(.*)$/i);
++    if(qMatch){pushCurrent();current={statement:qMatch[2].trim(),type:null,options:[],correctAnswer:null,explanation:null};mode='statement';continue;}
++    if(!current)continue;
++    const option=line.match(/^([A-E])\s*[).:\-]\s*(.+)$/i);
++    if(option){current.options.push({key:option[1].toUpperCase(),text:option[2].trim()});mode='options';continue;}
++    const answer=line.match(/^(?:gabarito|resposta(?:\s+correta)?|alternativa\s+correta|correta)\s*[:\-]\s*(.+)$/i);
++    if(answer){current.correctAnswer=normalizeFriendlyAnswer(answer[1],current.options);mode='answer';continue;}
++    const explanation=line.match(/^(?:explica(?:[cç][aã]o|cao)|justificativa|coment[aá]rio)\s*[:\-]\s*(.*)$/i);
++    if(explanation){current.explanation=explanation[1].trim()||null;mode='explanation';continue;}
++    const typeMatch=line.match(/^tipo\s*[:\-]\s*(.+)$/i);
++    if(typeMatch){
++      const v=typeMatch[1].toLowerCase();
++      current.type=/certo|errado|verdadeiro|falso/.test(v)?'true-false':/curta|aberta/.test(v)?'short-answer':/m[uú]ltipla|objetiva/.test(v)?'single-choice':null;
++      continue;
++    }
++    if(mode==='explanation'&&current.explanation)current.explanation+=` ${line}`;
++    else if(mode==='statement'||(!current.options.length&&!current.correctAnswer))current.statement+=(current.statement?' ':'')+line;
++  }
++  pushCurrent();
++  for(const q of questions){
++    if(!q.type){
++      const keys=q.options.map(o=>o.key).join('');
++      const labels=q.options.map(o=>o.text.toLowerCase()).join(' ');
++      q.type=(q.options.length===2&&(keys==='CE'||/certo|errado|verdadeiro|falso/.test(labels)))?'true-false':q.options.length>=2?'single-choice':'short-answer';
++    }
++    q.correctAnswer=normalizeFriendlyAnswer(q.correctAnswer||'',q.options)||null;
