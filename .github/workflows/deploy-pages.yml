@@ -59,7 +59,83 @@ jobs:
           cat hotfix-v1.0.3.part-00 hotfix-v1.0.3.part-01 hotfix-v1.0.3.part-02 hotfix-v1.0.3.part-03 > _build/hotfix-v1.0.3.patch
           patch -p1 -d _site < _build/hotfix-v1.0.3.patch
           patch -p1 -d _site < hotfix-v1.0.4.patch
-          patch -p1 -d _site < hotfix-v1.0.5.patch
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace_exact(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Trecho esperado não encontrado em {path}: {old[:80]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_exact('_site/index.html',
+              '<meta name="description" content="Transforme materiais de exercícios em atividades interativas, localmente no navegador." />',
+              '<meta name="description" content="Onstudies transforma materiais de estudo em atividades interativas, localmente no navegador." />')
+          replace_exact('_site/index.html',
+              '<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />',
+              '<link rel="icon" type="image/png" sizes="64x64" href="./icons/icon-64.png" />')
+          replace_exact('_site/index.html',
+              '<title>Materiais Interativos — v1.0.4</title>',
+              '<title>Onstudies — v1.0.5</title>')
+          replace_exact('_site/index.html',
+              '''    <div class="brand">
+              <div class="brand-mark" aria-hidden="true">MI</div>
+              <div>
+                <strong>Materiais Interativos</strong>
+                <span>v1.0.4 · local-first</span>
+              </div>
+            </div>''',
+              '''    <div class="brand" aria-label="Onstudies">
+              <img class="brand-mark" src="./icons/onstudies-mark.png" alt="" aria-hidden="true" />
+              <div class="brand-copy">
+                <strong class="brand-name"><span class="brand-on">on</span><span class="brand-studies">studies</span></strong>
+                <span>v1.0.5 · local-first</span>
+              </div>
+            </div>''')
+
+          css = Path('_site/styles.css')
+          css.write_text(css.read_text(encoding='utf-8') + r'''
+
+          /* Onstudies v1.0.5 — identidade oficial */
+          :root { --brand-blue:#0a66ff; --brand-green:#20d49a; --brand-navy:#0f315a; }
+          :root[data-theme="dark"] { --brand-blue:#63a9ff; --brand-green:#58e5b5; --brand-navy:#d9ecff; }
+          .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+          .brand .brand-mark { width:46px; height:46px; display:block; object-fit:cover; border-radius:13px; border:1px solid color-mix(in srgb, var(--brand-blue) 16%, var(--line)); box-shadow:0 7px 18px rgba(10,102,255,.12); background:#f8fbff; color:initial; font-weight:initial; }
+          .brand-copy { min-width:0; }
+          .brand-name { display:block; font-size:1.08rem; line-height:1; letter-spacing:-.025em; white-space:nowrap; }
+          .brand-name .brand-on { display:inline; color:var(--brand-blue); font:inherit; font-weight:850; margin:0; }
+          .brand-name .brand-studies { display:inline; color:var(--brand-navy); font:inherit; font-weight:850; margin:0; }
+          :root[data-theme="dark"] .brand-name .brand-studies { color:var(--text); }
+          .brand-copy > span { display:block; color:var(--muted); font-size:.82rem; margin-top:4px; }
+          @media (max-width:620px) {
+            .brand .brand-mark { width:40px; height:40px; }
+            .brand-name { font-size:1rem; }
+            .brand-name .brand-on, .brand-name .brand-studies { display:inline !important; }
+            .brand-copy > span { display:none !important; }
+          }
+          '''.strip() + '\n', encoding='utf-8')
+
+          replace_exact('_site/js/app.js', "appVersion:'1.0.4'", "appVersion:'1.0.5'")
+          replace_exact('_site/js/quiz-transfer.js', "appVersion='1.0.4'", "appVersion='1.0.5'")
+
+          manifest_path = Path('_site/manifest.webmanifest')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          manifest['name'] = 'Onstudies'
+          manifest['short_name'] = 'Onstudies'
+          manifest['description'] = 'Plataforma local-first para transformar materiais de estudo em atividades interativas, com OCR, revisão, simulados e criação opcional por IA.'
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          replace_exact('_site/sw.js', "const CACHE = 'materiais-interativos-v1-0-4';", "const CACHE = 'onstudies-v1-0-5';")
+          replace_exact('_site/sw.js',
+              "'./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'",
+              "'./manifest.webmanifest','./icons/icon-64.png','./icons/icon-192.png','./icons/icon-512.png','./icons/onstudies-mark.png'")
+          replace_exact('_site/sw.js',
+              "keys.filter(k => k !== CACHE && k.startsWith('materiais-interativos-'))",
+              "keys.filter(k => k !== CACHE && (k.startsWith('materiais-interativos-') || k.startsWith('onstudies-')))")
+          PY
 
           mkdir -p _site/icons
           cp icons/icon-64.png _site/icons/icon-64.png
