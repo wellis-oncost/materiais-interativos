@@ -64,7 +64,7 @@ jobs:
           grep -q 'Interpretar resposta' _site/index.html
           grep -q 'Você não precisa saber nem criar JSON' _site/index.html
           grep -q 'parseFriendlyGeneratedText' _site/js/generation-utils.js
-          grep -q 'appVersion:\x271.0.3\x27' _site/js/app.js
+          grep -q "appVersion:'1.0.3'" _site/js/app.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
