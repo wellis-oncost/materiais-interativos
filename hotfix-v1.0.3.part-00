@@ -1,0 +1,81 @@
+diff -urN a/index.html b/index.html
+--- a/index.html	2026-09-25 12:02:30.652098615 +0000
++++ b/index.html	2026-09-25 12:02:30.652955634 +0000
+@@ -9,7 +9,7 @@
+   <link rel="manifest" href="./manifest.webmanifest" />
+   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+   <link rel="stylesheet" href="./styles.css" />
+-  <title>Materiais Interativos — v1.0.2</title>
++  <title>Materiais Interativos — v1.0.3</title>
+ </head>
+ <body>
+   <a class="skip-link" href="#mainContent">Pular para o conteúdo principal</a>
+@@ -18,7 +18,7 @@
+       <div class="brand-mark" aria-hidden="true">MI</div>
+       <div>
+         <strong>Materiais Interativos</strong>
+-        <span>v1.0.2 · local-first</span>
++        <span>v1.0.3 · local-first</span>
+       </div>
+     </div>
+     <div class="topbar-actions">
+@@ -193,7 +193,7 @@
+ 
+           <div class="row wrap gap generator-actions">
+             <button id="prepareGenerationBtn" class="btn primary" type="button">Preparar geração</button>
+-            <button id="copyGenerationPromptBtn" class="btn secondary" type="button" disabled>Copiar prompt</button>
++            <button id="copyGenerationPromptBtn" class="btn secondary" type="button" disabled>Copiar instruções</button>
+           </div>
+         </section>
+ 
+@@ -209,17 +209,19 @@
+           <label class="inline-check"><input id="rememberAiConnection" type="checkbox" /> Lembrar apenas endpoint e modelo neste navegador</label>
+           <button id="generateWithAiBtn" class="btn primary full" type="button" disabled>Gerar com IA conectada</button>
+           <p class="muted">Se o serviço bloquear chamadas do navegador (CORS), use a alternativa abaixo.</p>
+-          <div class="notice compact-notice"><strong>Sem conectar uma API</strong><p>Copie o prompt preparado, use-o no assistente de sua preferência e cole aqui somente o JSON retornado.</p></div>
++          <div class="notice compact-notice"><strong>Modo manual, sem API</strong><p>Copie as instruções preparadas, use-as no assistente de sua preferência e depois cole aqui a resposta completa. <strong>Você não precisa saber nem criar JSON.</strong></p></div>
+         </aside>
+       </div>
+ 
+       <section class="card generator-workbench">
+-        <div class="section-head compact-head"><div><p class="eyebrow">PROMPT E RETORNO</p><h2>3. Conferir a geração</h2></div></div>
+-        <label for="generationPrompt">Prompt preparado</label>
++        <div class="section-head compact-head"><div><p class="eyebrow">INSTRUÇÕES E RESPOSTA</p><h2>3. Conferir a geração</h2></div></div>
++        <label for="generationPrompt">Instruções preparadas para a IA</label>
+         <textarea id="generationPrompt" rows="10" readonly placeholder="Preencha as opções e clique em Preparar geração."></textarea>
+-        <label for="generationJson">JSON retornado pela IA</label>
+-        <textarea id="generationJson" rows="12" spellcheck="false" placeholder='Cole aqui um JSON com {"title":"...","questions":[...]}'></textarea>
+-        <div class="row wrap gap"><button id="validateGeneratedJsonBtn" class="btn secondary" type="button">Validar JSON</button><button id="createGeneratedMaterialBtn" class="btn primary" type="button" disabled>Criar material para revisão</button></div>
++        <label for="generationJson">Resposta da IA <span class="muted">(necessária apenas no modo manual)</span></label>
++        <p class="muted">Cole a resposta completa exatamente como recebeu. Pode ser texto normal, uma lista de questões ou um formato estruturado; a plataforma tentará entender automaticamente.</p>
++        <textarea id="generationJson" rows="12" spellcheck="false" placeholder="Ex.: Questão 1: ...\nA) ...\nB) ...\nResposta correta: B"></textarea>
++        <div class="row wrap gap"><button id="validateGeneratedJsonBtn" class="btn secondary" type="button">Interpretar resposta</button><button id="createGeneratedMaterialBtn" class="btn primary" type="button" disabled>Criar material para revisão</button></div>
++        <details class="generation-help"><summary>O que é JSON?</summary><p class="muted">É apenas um formato técnico usado por sistemas para organizar dados. Você não precisa aprender, escrever ou editar JSON para usar esta função.</p></details>
+         <div id="generationPreview" class="generation-preview hidden" aria-live="polite"></div>
+       </section>
+     </section>
+diff -urN a/js/ai-connector.js b/js/ai-connector.js
+--- a/js/ai-connector.js	2026-09-25 12:02:30.657573685 +0000
++++ b/js/ai-connector.js	2026-09-25 12:02:30.658430944 +0000
+@@ -33,14 +33,14 @@
+   const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),Math.max(5000,Number(timeoutMs)||90000));
+   const headers={'Content-Type':'application/json','Accept':'application/json'};
+   if(String(apiKey||'').trim())headers.Authorization=`Bearer ${String(apiKey).trim()}`;
+-  const body={model:modelName,messages:[{role:'system',content:'Gere questões educacionais e devolva somente JSON válido conforme solicitado.'},{role:'user',content:String(prompt||'')}],temperature:0.5};
++  const body={model:modelName,messages:[{role:'system',content:'Gere questões educacionais seguindo exatamente o formato solicitado pelo usuário. Não acrescente introdução ou despedida.'},{role:'user',content:String(prompt||'')}],temperature:0.5};
+   try{
+     const response=await fetchImpl(url,{method:'POST',headers,body:JSON.stringify(body),signal:controller.signal,referrerPolicy:'no-referrer'});
+     let payload=null; const raw=await response.text();
+     try{payload=raw?JSON.parse(raw):null;}catch{payload=raw;}
+     if(!response.ok){const message=typeof payload==='object'&&(payload?.error?.message||payload?.message);throw new Error(message||`O endpoint respondeu com HTTP ${response.status}.`);}
+     const content=extractAssistantText(payload);
+-    if(!content)throw new Error('O endpoint respondeu, mas não foi encontrado texto com o JSON das questões.');
++    if(!content)throw new Error('O endpoint respondeu, mas não foi encontrado texto com as questões.');
+     return {content,payload};
+   }catch(err){
+     if(err?.name==='AbortError')throw new Error('A geração excedeu o tempo limite configurado.');
+diff -urN a/js/app.js b/js/app.js
+--- a/js/app.js	2026-09-25 12:02:30.655579629 +0000
++++ b/js/app.js	2026-09-25 12:02:30.656471034 +0000
+@@ -249,13 +249,13 @@
+     state.generation={prompt,config,context,validated:null,provider:'manual-paste',model:null};
