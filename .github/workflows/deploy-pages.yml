@@ -1,6 +1,6 @@
-name: Deploy Materiais Interativos to GitHub Pages
+name: Deploy Onstudies to GitHub Pages
 
-# Publicação v1.0.4 — reconstrói a base v1.0.0 validada e aplica os hotfixes pós-lançamento.
+# Publicação v1.0.5 — reconstrói a base validada, aplica os hotfixes e a identidade Onstudies.
 on:
   push:
     branches:
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Rebuild base package and apply v1.0.4 hotfixes
+      - name: Rebuild base package and apply v1.0.5 hotfixes
         shell: bash
         run: |
           set -euo pipefail
@@ -59,14 +59,25 @@ jobs:
           cat hotfix-v1.0.3.part-00 hotfix-v1.0.3.part-01 hotfix-v1.0.3.part-02 hotfix-v1.0.3.part-03 > _build/hotfix-v1.0.3.patch
           patch -p1 -d _site < _build/hotfix-v1.0.3.patch
           patch -p1 -d _site < hotfix-v1.0.4.patch
+          patch -p1 -d _site < hotfix-v1.0.5.patch
 
-          grep -q 'v1.0.4 · local-first' _site/index.html
-          grep -q 'materiais-interativos-v1-0-4' _site/sw.js
-          grep -q 'Interpretar resposta' _site/index.html
-          grep -q 'Você não precisa saber nem criar JSON' _site/index.html
-          grep -q 'parseFriendlyGeneratedText' _site/js/generation-utils.js
-          grep -q "appVersion:'1.0.4'" _site/js/app.js
+          mkdir -p _site/icons
+          cp icons/icon-64.png _site/icons/icon-64.png
+          cp icons/icon-192.png _site/icons/icon-192.png
+          cp icons/icon-512.png _site/icons/icon-512.png
+          cp icons/onstudies-mark.png _site/icons/onstudies-mark.png
+
+          grep -q 'Onstudies — v1.0.5' _site/index.html
+          grep -q 'v1.0.5 · local-first' _site/index.html
+          grep -q 'onstudies-mark.png' _site/index.html
+          grep -q 'onstudies-v1-0-5' _site/sw.js
+          grep -q '"name": "Onstudies"' _site/manifest.webmanifest
+          grep -q "appVersion:'1.0.5'" _site/js/app.js
           grep -q 'buildVisualSignals({text:lines,imageCount:0,pathOps:0})' _site/js/extractors.js
+          test -s _site/icons/icon-64.png
+          test -s _site/icons/icon-192.png
+          test -s _site/icons/icon-512.png
+          test -s _site/icons/onstudies-mark.png
           if grep -q 'formulaSignalCount' _site/js/extractors.js; then
             echo 'Erro: referência quebrada formulaSignalCount ainda presente em extractors.js' >&2
             exit 1
